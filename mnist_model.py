@@ -5,6 +5,8 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import matplotlib
+matplotlib.use('Agg')  # Add this line before importing pyplot
 import matplotlib.pyplot as plt
 from torchvision.utils import make_grid
 import os

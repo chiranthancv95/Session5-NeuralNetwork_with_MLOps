@@ -1,0 +1,51 @@
+name: ML Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: List directory structure
+      run: ls -R
+      
+    - name: Run tests
+      run: |
+        python -m pytest tests/test_model.py -v --cov=./ --cov-report=xml
+      
+    - name: Train and deploy model
+      run: |
+        python deploy.py
+
+    - name: Upload trained model
+      uses: actions/upload-artifact@v2
+      with:
+        name: trained-model
+        path: models/
+        
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

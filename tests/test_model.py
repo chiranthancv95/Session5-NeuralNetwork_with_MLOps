@@ -108,3 +108,72 @@ def test_model_accuracy():
     print(f"Final Accuracy: {accuracy:.2f}%")
     
     assert accuracy > 95, f"Accuracy is {accuracy}%, should be >95%" 
+def test_model_robustness_to_noise():
+    """Test if model can handle noisy inputs"""
+    model = LightMNIST()
+    model.eval()
+    
+    # Create a clean test input
+    clean_input = torch.randn(1, 1, 28, 28)
+    clean_output = model(clean_input)
+    
+    # Add Gaussian noise
+    noise = torch.randn(1, 1, 28, 28) * 0.1
+    noisy_input = clean_input + noise
+    noisy_output = model(noisy_input)
+    
+    # Check if predictions are stable (same class)
+    clean_pred = clean_output.argmax(dim=1)
+    noisy_pred = noisy_output.argmax(dim=1)
+    
+    assert clean_pred == noisy_pred, "Model predictions should be stable under small noise"
+
+def test_model_memory_efficiency():
+    """Test if model's memory usage is within acceptable limits"""
+    import psutil
+    import os
+    
+    # Get initial memory usage
+    process = psutil.Process(os.getpid())
+    initial_memory = process.memory_info().rss / 1024 / 1024  # Convert to MB
+    
+    # Create and run model
+    model = LightMNIST()
+    test_input = torch.randn(100, 1, 28, 28)  # Batch size of 100
+    _ = model(test_input)
+    
+    # Get final memory usage
+    final_memory = process.memory_info().rss / 1024 / 1024
+    memory_used = final_memory - initial_memory
+    
+    # Check if memory usage is less than 500MB
+    assert memory_used < 500, f"Model used {memory_used:.2f}MB of memory, should be less than 500MB"
+
+def test_model_inference_speed():
+    """Test if model inference is fast enough"""
+    import time
+    
+    model = LightMNIST()
+    model.eval()
+    
+    # Prepare batch of images
+    batch_size = 32
+    test_input = torch.randn(batch_size, 1, 28, 28)
+    
+    # Warm-up run
+    _ = model(test_input)
+    
+    # Measure inference time
+    start_time = time.time()
+    num_runs = 10
+    
+    for _ in range(num_runs):
+        with torch.no_grad():
+            _ = model(test_input)
+    
+    end_time = time.time()
+    avg_time_per_batch = (end_time - start_time) / num_runs
+    avg_time_per_image = avg_time_per_batch / batch_size
+    
+    # Assert inference time is less than 1ms per image on average
+    assert avg_time_per_image < 0.001, f"Inference too slow: {avg_time_per_image*1000:.2f}ms per image"

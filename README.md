@@ -1,4 +1,9 @@
 
+# MNIST Neural Network with MLOps Pipeline
+
+[![ML Pipeline](https://github.com/chiranthancv95/Session5-NeuralNetwork_with_MLOps/actions/workflows/ml-pipeline.yml/badge.svg)](https://github.com/chiranthancv95/Session5-NeuralNetwork_with_MLOps/actions/workflows/ml-pipeline.yml)
+
+
 ## Model Architecture
 
 The model uses a lightweight CNN architecture:

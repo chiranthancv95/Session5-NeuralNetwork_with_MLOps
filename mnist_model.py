@@ -5,6 +5,9 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from torchvision.utils import make_grid
+import os
 
 class LightMNIST(nn.Module):
     def __init__(self):
@@ -33,6 +36,32 @@ class LightMNIST(nn.Module):
         x = x.view(-1, 5 * 5 * 16)
         x = self.fc1(x)
         return F.log_softmax(x, dim=1)
+
+def visualize_batch(dataloader, num_images=8, save_dir='training_visualizations'):
+    """Visualize a batch of original and augmented images"""
+    # Create directory if it doesn't exist
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # Get a batch of images
+    images, labels = next(iter(dataloader))
+    
+    # Select num_images from the batch
+    images = images[:num_images]
+    labels = labels[:num_images]
+    
+    # Create a grid of images
+    grid = make_grid(images, nrow=4, padding=2, normalize=True)
+    
+    # Plot and save
+    plt.figure(figsize=(10, 10))
+    plt.title('Augmented Training Images\nLabels: ' + 
+              ' '.join(str(label.item()) for label in labels))
+    plt.imshow(grid.permute(1, 2, 0), cmap='gray')
+    plt.axis('off')
+    plt.savefig(os.path.join(save_dir, 'augmented_training_batch.png'))
+    plt.close()
+    
+    print(f"Augmented images saved in {save_dir}/augmented_training_batch.png")
 
 def train(model, device, train_loader, optimizer):
     model.train()
@@ -72,21 +101,31 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # Data preprocessing and augmentation
+    # Define augmentations
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
+        transforms.Normalize((0.1307,), (0.3081,)),
+        transforms.RandomRotation(15),
+        transforms.RandomAffine(
+            degrees=0,
+            translate=(0.1, 0.1),
+            scale=(0.9, 1.1),
+            shear=10
+        )
     ])
     
-    # Load MNIST dataset
+    # Load MNIST dataset with augmentations
     train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
     train_loader = DataLoader(
         train_dataset, 
-        batch_size=128, 
+        batch_size=128,
         shuffle=True,
         num_workers=4,
         pin_memory=True
     )
+
+    # Visualize augmented images before training
+    visualize_batch(train_loader)
 
     # Initialize model
     model = LightMNIST().to(device)

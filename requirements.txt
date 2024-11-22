@@ -1,5 +1,7 @@
-torch
-torchvision
-tqdm
-pytest
-psutil
+torch==2.1.0
+torchvision==0.16.0
+tqdm==4.66.1
+pytest==7.4.3
+pytest-cov==4.1.0
+psutil==5.9.0
+matplotlib==3.7.1 
